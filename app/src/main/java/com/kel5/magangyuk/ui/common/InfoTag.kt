@@ -29,7 +29,7 @@ fun InfoTag(
         style = MaterialTheme.typography.labelMedium,
         color = Navy,
         modifier = modifier
-            .background(tone.background, RoundedCornerShape(8.dp))
+            .background(tone.background, RoundedCornerShape(50.dp))
             .padding(horizontal = 10.dp, vertical = 4.dp)
     )
 }
