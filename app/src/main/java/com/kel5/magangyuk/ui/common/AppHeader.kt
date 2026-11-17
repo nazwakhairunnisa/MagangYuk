@@ -53,8 +53,10 @@ fun AppHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // ----- Kiri: logo + pill role -----
-            Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
                     text = "MagangYuk!",
                     style = MaterialTheme.typography.titleLarge,
@@ -65,9 +67,8 @@ fun AppHeader(
                     style = MaterialTheme.typography.labelSmall,
                     color = Navy,
                     modifier = Modifier
-                        .padding(top = 4.dp)
                         .background(CreamYellow, RoundedCornerShape(50))
-                        .padding(horizontal = 10.dp, vertical = 2.dp)
+                        .padding(horizontal = 10.dp, vertical = 3.dp)
                 )
             }
 
