@@ -1,5 +1,7 @@
 package com.kel5.magangyuk
 
+import com.kel5.magangyuk.data.repository.NotifikasiRepository
+import com.kel5.magangyuk.notification.NotificationHelper
 import com.kel5.magangyuk.data.session.SessionManager
 import android.app.Application
 import com.kel5.magangyuk.data.local.AppDatabase
@@ -17,8 +19,15 @@ class MagangYukApp : Application() {
     // Pencatat sesi login (siapa yang sedang login), dibuat sekali untuk seluruh app
     val sessionManager: SessionManager by lazy { SessionManager(this) }
 
+    // Pintu tunggal untuk membuat notifikasi, dibuat sekali untuk seluruh app
+    val notifikasiRepository: NotifikasiRepository by lazy {
+        NotifikasiRepository(this, database.notifikasiDao())
+    }
     override fun onCreate() {
         super.onCreate()
+
+        // Buat channel notifikasi (satu channel: magangyuk_default)
+        NotificationHelper.createChannel(this)
 
         // Isi data awal di thread IO. seedIfEmpty melewati proses kalau akun sudah ada.
         CoroutineScope(Dispatchers.IO).launch {
