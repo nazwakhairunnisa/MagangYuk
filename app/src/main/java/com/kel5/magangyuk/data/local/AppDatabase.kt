@@ -9,6 +9,7 @@ import com.kel5.magangyuk.data.local.dao.LowonganDao
 import com.kel5.magangyuk.data.local.dao.MahasiswaDao
 import com.kel5.magangyuk.data.local.dao.MitraDao
 import com.kel5.magangyuk.data.local.dao.UserDao
+import com.kel5.magangyuk.data.local.dao.NotifikasiDao
 import com.kel5.magangyuk.data.local.entity.BookmarkEntity
 import com.kel5.magangyuk.data.local.entity.DosenEntity
 import com.kel5.magangyuk.data.local.entity.LamaranEntity
@@ -54,6 +55,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun mitraDao(): MitraDao
     abstract fun dosenDao(): DosenDao
     abstract fun lowonganDao(): LowonganDao
+    abstract fun notifikasiDao(): NotifikasiDao
 
     companion object {
         // Satu-satunya objek database di seluruh app (singleton)
