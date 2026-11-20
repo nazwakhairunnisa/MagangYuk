@@ -24,7 +24,7 @@ import com.kel5.magangyuk.ui.common.RolePill
 import com.kel5.magangyuk.ui.theme.MagangYukTheme
 import com.kel5.magangyuk.ui.theme.Navy
 
-// Layar "pintar": mengambil ViewModel lalu memanggil callback saat tujuan sudah diputuskan.
+// Layar mengambil ViewModel lalu memanggil callback saat tujuan sudah diputuskan.
 // Rute sebenarnya dihubungkan nanti di feature/navigation, jadi di sini cukup callback.
 @Composable
 fun SplashScreen(
@@ -35,6 +35,8 @@ fun SplashScreen(
     val app = LocalContext.current.applicationContext as MagangYukApp
 
     val viewModel: SplashViewModel = viewModel(
+        // key beda per linkRole -> link baru = SplashViewModel baru (sesi dicek ulang dengan link itu)
+        key = "splash_${linkRole?.name}",
         factory = viewModelFactory {
             initializer {
                 SplashViewModel(app.sessionManager, app.authRepository, app.seedJob, linkRole)
