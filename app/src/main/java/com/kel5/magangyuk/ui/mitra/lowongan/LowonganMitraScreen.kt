@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
@@ -23,6 +24,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Work
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +42,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import com.kel5.magangyuk.data.local.entity.JenisLowongan
 import com.kel5.magangyuk.data.local.entity.ModeKerja
 import com.kel5.magangyuk.data.repository.StatusLowongan
@@ -139,6 +151,7 @@ private fun LowonganCard(
     val l = item.lowongan
     val aktif = item.status == StatusLowongan.AKTIF
     val penuh = item.terisi >= l.kuota
+    val akanDihapus = item.jumlahPelamar == 0
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -157,11 +170,10 @@ private fun LowonganCard(
                         .background(CreamLight, RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = l.posisi.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Navy
+                    Icon(
+                        imageVector = Icons.Default.Work,
+                        contentDescription = null,
+                        tint = Navy
                     )
                 }
                 Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
@@ -195,32 +207,56 @@ private fun LowonganCard(
                     .fillMaxWidth()
                     .background(CreamLight, RoundedCornerShape(10.dp))
                     .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.People,
+                        contentDescription = null,
+                        tint = StatusGrayText,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Kuota ${item.terisi}/${l.kuota}",
+                        text = buildAnnotatedString {
+                            append("Kuota ")
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append("${item.terisi}/${l.kuota}")
+                            }
+                            if (penuh) {
+                                withStyle(SpanStyle(color = ActionRed)) { append(" (Penuh)") }
+                            }
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = Navy
                     )
-                    if (penuh) {
-                        Text(
-                            text = " (Penuh)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = ActionRed
-                        )
-                    }
                 }
-                Text(
-                    text = "${item.jumlahPelamar} pelamar",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Navy
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Badge,
+                        contentDescription = null,
+                        tint = StatusGrayText,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append("${item.jumlahPelamar}")
+                            }
+                            append(" pelamar")
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Navy
+                    )
+                }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AksiButton(
                     text = "Sunting",
+                    icon = Icons.Default.Edit,
                     container = GrayCream,
                     content = Navy,
                     onClick = onSuntingClick,
@@ -228,7 +264,8 @@ private fun LowonganCard(
                 )
                 if (aktif) {
                     AksiButton(
-                        text = if (item.jumlahPelamar == 0) "Hapus" else "Tutup Lowongan",
+                        text = if (akanDihapus) "Hapus" else "Tutup Lowongan",
+                        icon = if (akanDihapus) Icons.Default.Delete else Icons.Default.Pause,
                         container = StatusRedBg,
                         content = ActionRed,
                         onClick = onAksiClick,
@@ -237,6 +274,31 @@ private fun LowonganCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AksiButton(
+    text: String,
+    icon: ImageVector,
+    container: Color,
+    content: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(50),
+        colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = content)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text)
     }
 }
 
