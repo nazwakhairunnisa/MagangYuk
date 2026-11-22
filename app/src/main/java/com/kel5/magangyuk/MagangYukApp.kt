@@ -9,6 +9,7 @@ import com.kel5.magangyuk.data.local.DatabaseSeeder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.kel5.magangyuk.data.repository.LowonganRepository
 
 // Dijalankan Android satu kali setiap app dimulai, sebelum layar pertama muncul
 class MagangYukApp : Application() {
@@ -23,6 +24,11 @@ class MagangYukApp : Application() {
     val notifikasiRepository: NotifikasiRepository by lazy {
         NotifikasiRepository(this, database.notifikasiDao())
     }
+
+    val lowonganRepository: LowonganRepository by lazy {
+        LowonganRepository(database.lowonganDao())
+    }
+
     override fun onCreate() {
         super.onCreate()
 
