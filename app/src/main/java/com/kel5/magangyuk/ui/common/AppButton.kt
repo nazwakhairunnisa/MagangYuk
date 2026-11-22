@@ -3,19 +3,27 @@ package com.kel5.magangyuk.ui.common
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.kel5.magangyuk.ui.theme.*
@@ -28,12 +36,13 @@ fun AppButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     style: AppButtonStyle = AppButtonStyle.PRIMARY,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    trailingIcon: ImageVector? = null,   // BARU: ikon setelah teks, misal panah "Masuk →"
+    loading: Boolean = false             // BARU: tampilkan spinner dan abaikan klik
 ) {
-    val shape = RoundedCornerShape(50)   // pill bulat penuh sesuai Figma
+    val shape = RoundedCornerShape(50)
 
     when (style) {
-        // Tombol berisi penuh
         AppButtonStyle.PRIMARY, AppButtonStyle.POSITIVE, AppButtonStyle.DESTRUCTIVE -> {
             val container: Color
             val content: Color
@@ -43,7 +52,9 @@ fun AppButton(
                 else -> { container = Navy; content = CreamYellow }
             }
             Button(
-                onClick = onClick,
+                // Saat loading, klik diabaikan tapi warna tombol tetap navy
+                // (kalau memakai enabled = false, tombol berubah abu-abu dan terlihat "mati")
+                onClick = { if (!loading) onClick() },
                 modifier = modifier,
                 enabled = enabled,
                 shape = shape,
@@ -53,9 +64,8 @@ fun AppButton(
                     disabledContainerColor = GrayCream,
                     disabledContentColor = StatusGrayText
                 )
-            ) { Text(text) }
+            ) { ButtonContent(text, trailingIcon, loading) }
         }
-        // Tombol outline (garis tepi saja)
         else -> {
             val color = if (style == AppButtonStyle.DESTRUCTIVE_OUTLINE) ActionRed else StatusGrayText
             OutlinedButton(
@@ -66,6 +76,26 @@ fun AppButton(
                 border = BorderStroke(1.dp, color),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = color)
             ) { Text(text) }
+        }
+    }
+}
+
+// Isi tombol: spinner kalau loading, kalau tidak teks + ikon opsional
+@Composable
+private fun ButtonContent(text: String, trailingIcon: ImageVector?, loading: Boolean) {
+    if (loading) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(20.dp),
+            strokeWidth = 2.dp,
+            color = LocalContentColor.current   // ikut warna teks tombol
+        )
+    } else {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text)
+            if (trailingIcon != null) {
+                Spacer(Modifier.width(8.dp))
+                Icon(trailingIcon, contentDescription = null, modifier = Modifier.size(18.dp))
+            }
         }
     }
 }
