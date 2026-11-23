@@ -14,16 +14,20 @@ import com.kel5.magangyuk.MagangYukApp
 import com.kel5.magangyuk.data.local.entity.Role
 import com.kel5.magangyuk.ui.auth.LoginScreen
 import com.kel5.magangyuk.ui.auth.SplashScreen
+import com.kel5.magangyuk.util.NotifikasiTap
+import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavHost(
     linkRole: Role?,
+    notifTap: NotifikasiTap?,
+    onNotifTapConsumed: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
     val app = LocalContext.current.applicationContext as MagangYukApp
-    val scope = rememberCoroutineScope() // untuk memanggil fungsi suspend (logout) dari tombol
+    val scope = rememberCoroutineScope()
 
     val roleArg = listOf(navArgument(Routes.ARG_ROLE) { type = NavType.StringType })
 
@@ -37,7 +41,6 @@ fun AppNavHost(
                 linkRole = linkRole,
                 onGoToHome = { role ->
                     navController.navigate(Routes.main(role)) {
-                        // Splash dibuang dari tumpukan supaya tombol Back tidak kembali ke logo
                         popUpTo(Routes.SPLASH) { inclusive = true }
                     }
                 },
@@ -50,11 +53,17 @@ fun AppNavHost(
         }
 
         composable(Routes.LOGIN, arguments = roleArg) { entry ->
+            // Belum login = tidak ada penerima yang cocok. Buang ketukan notifikasi supaya
+            // tidak "nyangkut" lalu tiba-tiba melompat setelah login nanti.
+            LaunchedEffect(notifTap) {
+                if (notifTap != null) onNotifTapConsumed()
+            }
+
             LoginScreen(
                 role = entry.role(),
                 onLoginSuccess = { role ->
                     navController.navigate(Routes.main(role)) {
-                        popUpTo(Routes.LOGIN) { inclusive = true } // Back dari Beranda tidak ke Login
+                        popUpTo(Routes.LOGIN) { inclusive = true }
                     }
                 }
             )
@@ -64,11 +73,13 @@ fun AppNavHost(
             val role = entry.role()
             RoleScaffold(
                 role = role,
+                notifTap = notifTap,
+                onNotifTapConsumed = onNotifTapConsumed,
                 onLogout = {
                     scope.launch {
-                        app.authRepository.logout() // hapus sesi dulu, baru pindah layar
+                        app.authRepository.logout()
                         navController.navigate(Routes.login(role)) {
-                            popUpTo(Routes.MAIN) { inclusive = true } // buang seluruh area Main
+                            popUpTo(Routes.MAIN) { inclusive = true }
                         }
                     }
                 }
