@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import com.kel5.magangyuk.data.repository.LowonganRepository
 
 // Dijalankan Android satu kali setiap app dimulai, sebelum layar pertama muncul
 class MagangYukApp : Application() {
@@ -26,6 +27,10 @@ class MagangYukApp : Application() {
     // Pintu tunggal untuk membuat notifikasi, dibuat sekali untuk seluruh app
     val notifikasiRepository: NotifikasiRepository by lazy {
         NotifikasiRepository(this, database.notifikasiDao())
+    }
+
+    val lowonganRepository: LowonganRepository by lazy {
+        LowonganRepository(database.lowonganDao())
     }
 
     // Splash menunggu tiket ini selesai (join) sebelum mengecek sesi,
