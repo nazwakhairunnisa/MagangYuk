@@ -14,45 +14,75 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.kel5.magangyuk.MagangYukApp
 import com.kel5.magangyuk.data.local.entity.Role
 import com.kel5.magangyuk.ui.common.AppButton
 import com.kel5.magangyuk.ui.common.AppHeader
 import com.kel5.magangyuk.ui.common.BottomNavBar
 import com.kel5.magangyuk.ui.common.BottomNavItem
+import com.kel5.magangyuk.ui.notifikasi.NotifikasiRoute
 import com.kel5.magangyuk.ui.notifikasi.NotifikasiPermissionRequester
+import com.kel5.magangyuk.ui.notifikasi.NotifikasiViewModel
+import com.kel5.magangyuk.ui.notifikasi.NotifikasiViewModelFactory
 import com.kel5.magangyuk.ui.theme.CreamLight
+import androidx.compose.runtime.LaunchedEffect
+import com.kel5.magangyuk.util.NotifikasiTap
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun RoleScaffold(
     role: Role,
+    notifTap: NotifikasiTap?,
+    onNotifTapConsumed: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // NavController milik NavHost dalam (khusus area di antara header dan navbar)
     val navController = rememberNavController()
 
-    // Rute layar yang sedang tampil. by + State: berubah -> UI tergambar ulang.
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+
+    // Satu NotifikasiViewModel untuk header (badge) DAN layar Notifikasi.
+    // Dibuat di sini (di luar NavHost dalam), jadi keduanya melihat data yang sama.
+    val app = LocalContext.current.applicationContext as MagangYukApp
+    val notifViewModel: NotifikasiViewModel = viewModel(
+        factory = NotifikasiViewModelFactory(app.notifikasiRepository, app.sessionManager)
+    )
+    val notifState by notifViewModel.uiState.collectAsState()
+
+    // Ketuk notifikasi dari status bar (spesifikasi K.3):
+    // penerima = akun yang sedang login -> langsung ke layar tujuan, selain itu tetap di Beranda.
+    // LaunchedEffect(notifTap): jalan sekali setiap ada ketukan baru.
+        LaunchedEffect(notifTap) {
+            val tap = notifTap ?: return@LaunchedEffect
+            val session = app.sessionManager.session.first()
+            if (session != null && session.userId == tap.userId) {
+                navController.navigateToTab(notifikasiTujuan(role, tap.tipe))
+            }
+            onNotifTapConsumed() // kosongkan, supaya tidak diproses ulang
+        }
 
     val tabs = remember(role) { bottomTabsFor(role) }
 
     // startsWith: rute detail (mis. "mhs/lowongan/detail/3") tetap menyalakan menu induknya.
-    // Di layar Notifikasi/Profil tidak ada menu yang cocok -> "" -> tidak ada yang menyala.
     val selectedRoute = tabs.firstOrNull { currentRoute?.startsWith(it.route) == true }
         ?.route.orEmpty()
 
-    // Dialog izin notifikasi: muncul sekali setelah login (di-skip sendiri kalau sudah pernah diminta)
+    // Dialog izin notifikasi: muncul sekali setelah login
     NotifikasiPermissionRequester()
 
     Scaffold(
@@ -61,7 +91,7 @@ fun RoleScaffold(
         topBar = {
             AppHeader(
                 roleLabel = roleLabel(role),
-                unreadCount = 0, // TODO(notif): langkah 2, ambil dari database
+                unreadCount = notifState.unreadCount,
                 onNotificationClick = { navController.openSingleTop(Routes.NOTIFIKASI) },
                 onProfileClick = { navController.openSingleTop(Routes.PROFIL) }
             )
@@ -70,29 +100,26 @@ fun RoleScaffold(
             BottomNavBar(
                 items = tabs,
                 selectedRoute = selectedRoute,
-                onItemClick = { item ->
-                    navController.navigate(item.route) {
-                        // Kembali ke layar awal (Beranda) sambil menyimpan state menu yang ditinggalkan
-                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true   // tap menu yang sama tidak menumpuk layar
-                        restoreState = true      // state menu tujuan dipulihkan
-                    }
-                }
+                onItemClick = { item -> navController.navigateToTab(item.route) }
             )
         }
     ) { innerPadding ->
-        // innerPadding = ruang yang sudah dipakai header dan navbar, supaya isi tidak tertutup
         NavHost(
             navController = navController,
-            startDestination = tabs.first().route,   // menu pertama = Beranda
+            startDestination = tabs.first().route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // Layar bersama semua role
             composable(Routes.NOTIFIKASI) {
-                PlaceholderScreen("Notifikasi") // TODO(notif): langkah 2
+                // ViewModel + penandaan dibaca sudah diurus NotifikasiRoute (buatan B).
+                // Kita cukup menentukan tujuan saat kartu diketuk.
+                NotifikasiRoute(
+                    onNavigateTo = { item ->
+                        navController.navigateToTab(notifikasiTujuan(role, item.tipe))
+                    }
+                )
             }
             composable(Routes.PROFIL) {
-                // SEMENTARA sampai feature/profil jadi. Tombol ini cuma untuk menguji logout.
+                // SEMENTARA sampai feature/profil jadi
                 Column(Modifier.fillMaxSize()) {
                     PlaceholderScreen("Profil", Modifier.weight(1f))
                     AppButton(
@@ -116,13 +143,27 @@ fun RoleScaffold(
 private fun NavController.openSingleTop(route: String) =
     navigate(route) { launchSingleTop = true }
 
+// Pindah ke satu menu navbar. Dipakai tap navbar dan ketuk notifikasi.
+private fun NavController.navigateToTab(route: String) {
+    // Notifikasi dan Profil adalah layar sementara dari header, bukan bagian menu mana pun.
+    // Dibuang dulu TANPA saveState, supaya tidak ikut tersimpan lalu muncul lagi saat menu dibuka.
+    // Kalau layarnya memang tidak ada di tumpukan, hasilnya false dan tidak terjadi apa-apa.
+    popBackStack(Routes.NOTIFIKASI, inclusive = true)
+    popBackStack(Routes.PROFIL, inclusive = true)
+
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
 private fun roleLabel(role: Role) = when (role) {
     Role.MAHASISWA -> "Mahasiswa"
     Role.MITRA -> "Mitra"
     Role.DOSEN -> "Dosen"
 }
 
-// Isi navbar per role (urutan = urutan di spesifikasi). Ikon silakan disamakan dengan Figma.
 private fun bottomTabsFor(role: Role): List<BottomNavItem> = when (role) {
     Role.MAHASISWA -> listOf(
         BottomNavItem(Routes.Mahasiswa.BERANDA, "Beranda", Icons.Default.Home),
