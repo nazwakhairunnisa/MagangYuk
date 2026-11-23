@@ -1,6 +1,7 @@
 package com.kel5.magangyuk.ui.navigation
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -29,6 +30,7 @@ import com.kel5.magangyuk.ui.common.AppButton
 import com.kel5.magangyuk.ui.common.AppHeader
 import com.kel5.magangyuk.ui.common.BottomNavBar
 import com.kel5.magangyuk.ui.common.BottomNavItem
+import com.kel5.magangyuk.ui.mitra.lowongan.LowonganRoutes
 import com.kel5.magangyuk.ui.notifikasi.NotifikasiPermissionRequester
 import com.kel5.magangyuk.ui.theme.CreamLight
 
@@ -44,6 +46,7 @@ fun RoleScaffold(
     // Rute layar yang sedang tampil. by + State: berubah -> UI tergambar ulang.
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val showAppHeader = !hidesAppHeader(currentRoute)
 
     val tabs = remember(role) { bottomTabsFor(role) }
 
@@ -59,12 +62,16 @@ fun RoleScaffold(
         modifier = modifier,
         containerColor = CreamLight,
         topBar = {
-            AppHeader(
-                roleLabel = roleLabel(role),
-                unreadCount = 0, // TODO(notif): langkah 2, ambil dari database
-                onNotificationClick = { navController.openSingleTop(Routes.NOTIFIKASI) },
-                onProfileClick = { navController.openSingleTop(Routes.PROFIL) }
-            )
+            // Layar dengan header sendiri: AppHeader tidak dirender,
+            // Scaffold otomatis tidak menyisakan ruang di atas (innerPadding atas = 0)
+            if (showAppHeader) {
+                AppHeader(
+                    roleLabel = roleLabel(role),
+                    unreadCount = 0, // TODO(notif): langkah 2, ambil dari database
+                    onNotificationClick = { navController.openSingleTop(Routes.NOTIFIKASI) },
+                    onProfileClick = { navController.openSingleTop(Routes.PROFIL) }
+                )
+            }
         },
         bottomBar = {
             BottomNavBar(
@@ -81,11 +88,23 @@ fun RoleScaffold(
             )
         }
     ) { innerPadding ->
-        // innerPadding = ruang yang sudah dipakai header dan navbar, supaya isi tidak tertutup
+        // Kalau AppHeader disembunyikan, layar tujuan mengurus sendiri jarak status bar-nya,
+        // jadi padding atas dari Scaffold tidak dipakai (supaya tidak dobel).
+        val contentPadding = if (showAppHeader) {
+            innerPadding
+        } else {
+            PaddingValues(
+                start = 0.dp,
+                top = 0.dp,
+                end = 0.dp,
+                bottom = innerPadding.calculateBottomPadding()
+            )
+        }
+
         NavHost(
             navController = navController,
-            startDestination = tabs.first().route,   // menu pertama = Beranda
-            modifier = Modifier.padding(innerPadding)
+            startDestination = tabs.first().route,
+            modifier = Modifier.padding(contentPadding)
         ) {
             // Layar bersama semua role
             composable(Routes.NOTIFIKASI) {
@@ -115,6 +134,16 @@ fun RoleScaffold(
 
 private fun NavController.openSingleTop(route: String) =
     navigate(route) { launchSingleTop = true }
+
+// Rute yang punya header sendiri (back arrow + judul), jadi AppHeader global disembunyikan.
+// Pakai startsWith karena rute form bisa punya argumen, mis. "mitra/lowongan/form?id={id}".
+private fun hidesAppHeader(route: String?): Boolean {
+    if (route == null) return false
+    val routesWithOwnHeader = listOf(
+        LowonganRoutes.FORM   // <- GANTI dengan nama konstanta rute form di LowonganRoutes.kt
+    )
+    return routesWithOwnHeader.any { route.startsWith(it) }
+}
 
 private fun roleLabel(role: Role) = when (role) {
     Role.MAHASISWA -> "Mahasiswa"
