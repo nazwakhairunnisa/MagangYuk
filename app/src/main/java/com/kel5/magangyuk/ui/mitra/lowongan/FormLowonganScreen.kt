@@ -127,7 +127,7 @@ fun FormLowonganScreen(
                 )
             }
 
-            Field("Posisi", required = true) {
+            Field("Posisi", required = true, trailing = "Wajib diisi") {
                 TextInput(
                     value = state.posisi,
                     onChange = { v -> viewModel.ubah { it.copy(posisi = v) } },
