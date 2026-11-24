@@ -69,6 +69,28 @@ interface LowonganDao {
         """
     )
     suspend fun countTerisi(lowonganId: Long): Int
+
+    // Daftar lowongan untuk mahasiswa. Penjelasan:
+    // - JOIN mitra: mengambil nama perusahaan untuk ditampilkan di card
+    // - terisi: slot terpakai, dipakai hitungStatus() milik B
+    // - EXISTS(...) dibookmark: true kalau mahasiswa ini sudah menyimpan lowongan tersebut
+    // Filter Aktif/Tutup TIDAK dilakukan di SQL, tapi di Repository lewat hitungStatus()
+    @Query(
+        """
+        SELECT l.*,
+          m.namaPerusahaan AS namaPerusahaan,
+          (SELECT COUNT(*) FROM lamaran
+             WHERE lowonganId = l.id
+               AND status IN ('DITERIMA', 'DIKONFIRMASI')) AS terisi,
+          EXISTS(SELECT 1 FROM bookmark
+             WHERE bookmark.lowonganId = l.id
+               AND bookmark.mahasiswaId = :mahasiswaId) AS dibookmark
+        FROM lowongan l
+        JOIN mitra m ON m.userId = l.mitraId
+        ORDER BY l.id DESC
+        """
+    )
+    fun observeUntukMahasiswa(mahasiswaId: Long): Flow<List<LowonganUntukMahasiswa>>
 }
 
 // Hasil query di atas: satu lowongan + dua angka hitungan.
@@ -78,4 +100,12 @@ data class LowonganDenganStatistik(
     @Embedded val lowongan: LowonganEntity,
     val terisi: Int,
     val jumlahPelamar: Int
+)
+
+// Hasil query untuk sisi mahasiswa: lowongan + nama PT + slot terisi + status bookmark
+data class LowonganUntukMahasiswa(
+    @Embedded val lowongan: LowonganEntity,
+    val namaPerusahaan: String,
+    val terisi: Int,
+    val dibookmark: Boolean
 )
