@@ -48,6 +48,8 @@ class MagangYukApp : Application() {
         LowonganMahasiswaRepository(
             database.lowonganDao(),
             database.bookmarkDao(),
+            database.lamaranDao(),
+            database.magangDao(),
             lowonganRepository
         )
     }
