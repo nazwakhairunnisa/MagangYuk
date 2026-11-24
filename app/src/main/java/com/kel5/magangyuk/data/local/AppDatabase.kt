@@ -4,8 +4,11 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.kel5.magangyuk.data.local.dao.BookmarkDao
 import com.kel5.magangyuk.data.local.dao.DosenDao
+import com.kel5.magangyuk.data.local.dao.LamaranDao
 import com.kel5.magangyuk.data.local.dao.LowonganDao
+import com.kel5.magangyuk.data.local.dao.MagangDao
 import com.kel5.magangyuk.data.local.dao.MahasiswaDao
 import com.kel5.magangyuk.data.local.dao.MitraDao
 import com.kel5.magangyuk.data.local.dao.UserDao
@@ -56,6 +59,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dosenDao(): DosenDao
     abstract fun lowonganDao(): LowonganDao
     abstract fun notifikasiDao(): NotifikasiDao
+    abstract fun bookmarkDao(): BookmarkDao
+    abstract fun lamaranDao(): LamaranDao
+    abstract fun magangDao(): MagangDao
 
     companion object {
         // Satu-satunya objek database di seluruh app (singleton)
