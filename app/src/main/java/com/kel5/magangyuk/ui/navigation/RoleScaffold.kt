@@ -171,7 +171,8 @@ private fun hidesAppHeader(route: String?): Boolean {
     if (route == null) return false
     val routesWithOwnHeader = listOf(
         LowonganRoutes.FORM,
-        Routes.PROFIL
+        Routes.PROFIL,
+        Routes.Mahasiswa.DETAIL_LOWONGAN.substringBefore("/{")
     )
     return routesWithOwnHeader.any { route.startsWith(it) }
 }

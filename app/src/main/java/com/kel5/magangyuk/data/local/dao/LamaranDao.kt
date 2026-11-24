@@ -2,6 +2,7 @@ package com.kel5.magangyuk.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface LamaranDao {
@@ -26,4 +27,22 @@ interface LamaranDao {
         """
     )
     suspend fun countAktif(mahasiswaId: Long): Int
+
+    @Query(
+        """
+        SELECT EXISTS(
+            SELECT 1 FROM lamaran
+            WHERE mahasiswaId = :mahasiswaId AND lowonganId = :lowonganId
+        )
+        """
+    )
+    fun observeSudahMelamar(mahasiswaId: Long, lowonganId: Long): Flow<Boolean>
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM lamaran
+        WHERE mahasiswaId = :mahasiswaId AND status IN ('MENUNGGU', 'DITERIMA')
+        """
+    )
+    fun observeCountAktif(mahasiswaId: Long): Flow<Int>
 }
