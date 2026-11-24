@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import com.kel5.magangyuk.data.repository.LowonganRepository
+import com.kel5.magangyuk.data.repository.LowonganMahasiswaRepository
 import com.kel5.magangyuk.data.repository.ProfilRepository
 
 // Dijalankan Android satu kali setiap app dimulai, sebelum layar pertama muncul
@@ -41,6 +42,14 @@ class MagangYukApp : Application() {
 
     val lowonganRepository: LowonganRepository by lazy {
         LowonganRepository(database.lowonganDao())
+    }
+
+    val lowonganMahasiswaRepository: LowonganMahasiswaRepository by lazy {
+        LowonganMahasiswaRepository(
+            database.lowonganDao(),
+            database.bookmarkDao(),
+            lowonganRepository
+        )
     }
 
     // Splash menunggu tiket ini selesai (join) sebelum mengecek sesi,
