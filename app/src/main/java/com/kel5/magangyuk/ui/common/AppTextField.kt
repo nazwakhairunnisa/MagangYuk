@@ -8,9 +8,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -31,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -57,7 +62,10 @@ fun AppTextField(
     isPassword: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
     imeAction: ImeAction = ImeAction.Next,
-    keyboardActions: KeyboardActions = KeyboardActions.Default
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    singleLine: Boolean = true,          // false untuk field banyak baris
+    minLines: Int = 1,                   // tinggi minimal saat multiline
+    leadingIcon: ImageVector? = null     // BARU: ikon di dalam field (telepon, email, dst)
 ) {
     // State lokal khusus tampilan: apakah password sedang terlihat.
     // Disimpan di sini (bukan di ViewModel) karena tidak penting untuk logika bisnis.
@@ -87,7 +95,8 @@ fun AppTextField(
             modifier = Modifier
                 .padding(top = 8.dp)
                 .fillMaxWidth(),
-            singleLine = true,
+            singleLine = singleLine,
+            minLines = minLines,
             interactionSource = interactionSource,
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = Navy),
             cursorBrush = SolidColor(Navy),
@@ -105,13 +114,27 @@ fun AppTextField(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .heightIn(min = 48.dp)
                         .background(White, shape)
                         .border(1.dp, borderColor, shape)
-                        .padding(start = 16.dp, end = if (isPassword) 4.dp else 16.dp),
+                        .padding(
+                            start = 16.dp,
+                            end = if (isPassword) 4.dp else 16.dp,
+                            top = if (singleLine) 0.dp else 12.dp,
+                            bottom = if (singleLine) 0.dp else 12.dp
+                        ),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    if (leadingIcon != null) {
+                        Icon(
+                            imageVector = leadingIcon,
+                            contentDescription = null,
+                            tint = StatusGrayText,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(12.dp))
+                    }
                     Box(modifier = Modifier.weight(1f)) {
                         if (value.isEmpty()) {
                             Text(

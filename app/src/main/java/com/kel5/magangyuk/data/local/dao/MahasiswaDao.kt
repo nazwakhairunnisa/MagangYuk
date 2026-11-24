@@ -20,4 +20,8 @@ interface MahasiswaDao {
     // pembatasan itu dijaga di Repository/ViewModel, bukan di sini.
     @Update
     suspend fun update(mahasiswa: MahasiswaEntity)
+
+    // Dipakai Profil Dosen: jumlah mahasiswa bimbingan (otomatis, tidak disimpan)
+    @Query("SELECT COUNT(*) FROM mahasiswa WHERE dosenId = :dosenId")
+    suspend fun countByDosenId(dosenId: Long): Int
 }

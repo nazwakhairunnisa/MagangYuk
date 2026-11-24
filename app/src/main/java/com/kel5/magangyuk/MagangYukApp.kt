@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import com.kel5.magangyuk.data.repository.LowonganRepository
+import com.kel5.magangyuk.data.repository.ProfilRepository
 
 // Dijalankan Android satu kali setiap app dimulai, sebelum layar pertama muncul
 class MagangYukApp : Application() {
@@ -27,6 +28,15 @@ class MagangYukApp : Application() {
     // Pintu tunggal untuk membuat notifikasi, dibuat sekali untuk seluruh app
     val notifikasiRepository: NotifikasiRepository by lazy {
         NotifikasiRepository(this, database.notifikasiDao())
+    }
+
+    // Dipakai layar Profil (satu repository untuk ketiga role)
+    val profilRepository: ProfilRepository by lazy {
+        ProfilRepository(
+            database.mahasiswaDao(),
+            database.mitraDao(),
+            database.dosenDao()
+        )
     }
 
     val lowonganRepository: LowonganRepository by lazy {

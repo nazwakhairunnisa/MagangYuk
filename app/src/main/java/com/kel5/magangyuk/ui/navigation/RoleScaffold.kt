@@ -1,9 +1,9 @@
 package com.kel5.magangyuk.ui.navigation
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -30,20 +31,21 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kel5.magangyuk.MagangYukApp
 import com.kel5.magangyuk.data.local.entity.Role
-import com.kel5.magangyuk.ui.common.AppButton
 import com.kel5.magangyuk.ui.common.AppHeader
 import com.kel5.magangyuk.ui.common.BottomNavBar
 import com.kel5.magangyuk.ui.common.BottomNavItem
 import com.kel5.magangyuk.ui.mitra.lowongan.LowonganRoutes
-import com.kel5.magangyuk.ui.notifikasi.NotifikasiRoute
 import com.kel5.magangyuk.ui.notifikasi.NotifikasiPermissionRequester
+import com.kel5.magangyuk.ui.notifikasi.NotifikasiRoute
 import com.kel5.magangyuk.ui.notifikasi.NotifikasiViewModel
 import com.kel5.magangyuk.ui.notifikasi.NotifikasiViewModelFactory
+import com.kel5.magangyuk.ui.profil.ProfilRoute
 import com.kel5.magangyuk.ui.theme.CreamLight
-import androidx.compose.runtime.LaunchedEffect
 import com.kel5.magangyuk.util.NotifikasiTap
 import kotlinx.coroutines.flow.first
 
+// OptIn: WindowInsets.isImeVisible masih ditandai experimental oleh Compose
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RoleScaffold(
     role: Role,
@@ -70,14 +72,14 @@ fun RoleScaffold(
     // Ketuk notifikasi dari status bar (spesifikasi K.3):
     // penerima = akun yang sedang login -> langsung ke layar tujuan, selain itu tetap di Beranda.
     // LaunchedEffect(notifTap): jalan sekali setiap ada ketukan baru.
-        LaunchedEffect(notifTap) {
-            val tap = notifTap ?: return@LaunchedEffect
-            val session = app.sessionManager.session.first()
-            if (session != null && session.userId == tap.userId) {
-                navController.navigateToTab(notifikasiTujuan(role, tap.tipe))
-            }
-            onNotifTapConsumed() // kosongkan, supaya tidak diproses ulang
+    LaunchedEffect(notifTap) {
+        val tap = notifTap ?: return@LaunchedEffect
+        val session = app.sessionManager.session.first()
+        if (session != null && session.userId == tap.userId) {
+            navController.navigateToTab(notifikasiTujuan(role, tap.tipe))
         }
+        onNotifTapConsumed() // kosongkan, supaya tidak diproses ulang
+    }
 
     val tabs = remember(role) { bottomTabsFor(role) }
 
@@ -97,18 +99,23 @@ fun RoleScaffold(
             if (showAppHeader) {
                 AppHeader(
                     roleLabel = roleLabel(role),
-                    unreadCount = notifState.unreadCount, // dari main (badge notifikasi)
+                    unreadCount = notifState.unreadCount,
                     onNotificationClick = { navController.openSingleTop(Routes.NOTIFIKASI) },
                     onProfileClick = { navController.openSingleTop(Routes.PROFIL) }
                 )
             }
         },
         bottomBar = {
-            BottomNavBar(
-                items = tabs,
-                selectedRoute = selectedRoute,
-                onItemClick = { item -> navController.navigateToTab(item.route) }
-            )
+            // Navbar disembunyikan saat keyboard terbuka, supaya tidak ada
+            // jarak kosong setinggi navbar di atas keyboard.
+            val imeVisible = WindowInsets.isImeVisible
+            if (!imeVisible) {
+                BottomNavBar(
+                    items = tabs,
+                    selectedRoute = selectedRoute,
+                    onItemClick = { item -> navController.navigateToTab(item.route) }
+                )
+            }
         }
     ) { innerPadding ->
         // Kalau AppHeader disembunyikan, layar tujuan mengurus sendiri jarak status bar-nya,
@@ -139,15 +146,10 @@ fun RoleScaffold(
                 )
             }
             composable(Routes.PROFIL) {
-                // SEMENTARA sampai feature/profil jadi
-                Column(Modifier.fillMaxSize()) {
-                    PlaceholderScreen("Profil", Modifier.weight(1f))
-                    AppButton(
-                        text = "Keluar Akun",
-                        onClick = onLogout,
-                        modifier = Modifier.fillMaxWidth().padding(24.dp)
-                    )
-                }
+                ProfilRoute(
+                    onBack = { navController.popBackStack() },
+                    onLogout = onLogout
+                )
             }
 
             // Layar khusus role
@@ -168,9 +170,11 @@ private fun NavController.openSingleTop(route: String) =
 private fun hidesAppHeader(route: String?): Boolean {
     if (route == null) return false
     val routesWithOwnHeader = listOf(
-        LowonganRoutes.FORM
+        LowonganRoutes.FORM,
+        Routes.PROFIL
     )
     return routesWithOwnHeader.any { route.startsWith(it) }
+}
 
 // Pindah ke satu menu navbar. Dipakai tap navbar dan ketuk notifikasi.
 private fun NavController.navigateToTab(route: String) {
