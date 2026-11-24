@@ -91,7 +91,26 @@ interface LowonganDao {
         """
     )
     fun observeUntukMahasiswa(mahasiswaId: Long): Flow<List<LowonganUntukMahasiswa>>
+
+    // Satu lowongan untuk halaman detail. Hasil null = id tidak ada.
+    @Query(
+        """
+        SELECT l.*,
+          m.namaPerusahaan AS namaPerusahaan,
+          (SELECT COUNT(*) FROM lamaran
+             WHERE lowonganId = l.id
+               AND status IN ('DITERIMA', 'DIKONFIRMASI')) AS terisi,
+          EXISTS(SELECT 1 FROM bookmark
+             WHERE bookmark.lowonganId = l.id
+               AND bookmark.mahasiswaId = :mahasiswaId) AS dibookmark
+        FROM lowongan l
+        JOIN mitra m ON m.userId = l.mitraId
+        WHERE l.id = :lowonganId
+        """
+    )
+    fun observeDetailUntukMahasiswa(lowonganId: Long, mahasiswaId: Long): Flow<LowonganUntukMahasiswa?>
 }
+
 
 // Hasil query di atas: satu lowongan + dua angka hitungan.
 // @Embedded artinya semua kolom lowongan dimasukkan ke properti `lowongan`,
