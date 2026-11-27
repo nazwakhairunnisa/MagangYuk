@@ -11,7 +11,7 @@ private val POLA_TELEPON = Regex("""^(\+62|08)\d{8,11}$""")
 
 fun validasiTelepon(telepon: String): String? = when {
     telepon.isBlank() -> "Wajib diisi"
-    !POLA_TELEPON.matches(telepon.trim()) -> "Nomor tidak valid (08xx atau +62, 10-13 digit)"
+    !POLA_TELEPON.matches(telepon.trim()) -> "Nomor tidak valid (08xx atau +62, 10-13 digit tanpa spasi)"
     else -> null
 }
 
