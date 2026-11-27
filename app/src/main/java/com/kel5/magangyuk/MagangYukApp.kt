@@ -4,6 +4,7 @@ import android.app.Application
 import com.kel5.magangyuk.data.local.AppDatabase
 import com.kel5.magangyuk.data.local.DatabaseSeeder
 import com.kel5.magangyuk.data.repository.AuthRepository
+import com.kel5.magangyuk.data.repository.LamaranRepository
 import com.kel5.magangyuk.data.repository.NotifikasiRepository
 import com.kel5.magangyuk.data.session.SessionManager
 import com.kel5.magangyuk.notification.NotificationHelper
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 import com.kel5.magangyuk.data.repository.LowonganRepository
 import com.kel5.magangyuk.data.repository.LowonganMahasiswaRepository
 import com.kel5.magangyuk.data.repository.ProfilRepository
+import com.kel5.magangyuk.util.FileStorage
 
 // Dijalankan Android satu kali setiap app dimulai, sebelum layar pertama muncul
 class MagangYukApp : Application() {
@@ -52,6 +54,12 @@ class MagangYukApp : Application() {
             database.magangDao(),
             lowonganRepository
         )
+    }
+
+    val fileStorage: FileStorage by lazy { FileStorage(this) }
+
+    val lamaranRepository: LamaranRepository by lazy {
+        LamaranRepository(database, lowonganRepository, notifikasiRepository, fileStorage)
     }
 
     // Splash menunggu tiket ini selesai (join) sebelum mengecek sesi,

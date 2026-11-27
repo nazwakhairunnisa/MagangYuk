@@ -5,6 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.kel5.magangyuk.ui.mahasiswa.lamaran.FormLamaranRoute
 import com.kel5.magangyuk.ui.mahasiswa.lowongan.DetailLowonganRoute
 import com.kel5.magangyuk.ui.mahasiswa.lowongan.LowonganRoute
 
@@ -22,12 +23,32 @@ fun NavGraphBuilder.mahasiswaGraph(navController: NavController) {
         route = Routes.Mahasiswa.DETAIL_LOWONGAN,
         arguments = listOf(navArgument(Routes.Mahasiswa.ARG_LOWONGAN_ID) { type = NavType.LongType })
     ) { entry ->
+        val lowonganId = entry.arguments?.getLong(Routes.Mahasiswa.ARG_LOWONGAN_ID) ?: 0L
         DetailLowonganRoute(
-            // Ambil {id} dari alamat rute
+            lowonganId = lowonganId,
+            onBack = { navController.popBackStack() },
+            onAjukanLamaran = { id ->
+                navController.navigate(Routes.Mahasiswa.formLamaran(id))
+            }
+        )
+    }
+
+    composable(
+        route = Routes.Mahasiswa.FORM_LAMARAN,
+        arguments = listOf(navArgument(Routes.Mahasiswa.ARG_LOWONGAN_ID) { type = NavType.LongType })
+    ) { entry ->
+        FormLamaranRoute(
             lowonganId = entry.arguments?.getLong(Routes.Mahasiswa.ARG_LOWONGAN_ID) ?: 0L,
             onBack = { navController.popBackStack() },
-            // TODO Fase 3 (feature/mhs-lamaran): navigate ke Form Lamaran
-            onAjukanLamaran = { }
+            onSelesai = {
+                // Sukses -> ke menu Lamaran. popUpTo(BERANDA) membuang Lowongan, Detail, dan Form
+                // dari tumpukan (tanpa saveState), jadi tab Lowongan dibuka bersih lagi nanti
+                // dan form yang sudah terkirim tidak muncul lagi.
+                navController.navigate(Routes.Mahasiswa.LAMARAN) {
+                    popUpTo(Routes.Mahasiswa.BERANDA)
+                    launchSingleTop = true
+                }
+            }
         )
     }
 

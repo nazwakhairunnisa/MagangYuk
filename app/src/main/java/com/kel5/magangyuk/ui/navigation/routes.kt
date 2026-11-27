@@ -31,7 +31,10 @@ object Routes {
 
         const val ARG_LOWONGAN_ID = "id"
         const val DETAIL_LOWONGAN = "mhs/lowongan/detail/{$ARG_LOWONGAN_ID}"
+        const val FORM_LAMARAN = "mhs/lowongan/lamar/{$ARG_LOWONGAN_ID}"
         fun detailLowongan(id: Long) = "mhs/lowongan/detail/$id"
+        fun formLamaran(id: Long) = "mhs/lowongan/lamar/$id"
+
     }
 
     object Mitra {
